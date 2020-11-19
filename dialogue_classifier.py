@@ -18,6 +18,28 @@ def get_raw_training_data(filename):
                 training_data[row[0].lower()] += [row[1].lower()]
             else:
                 training_data[row[0]] = [row[1].lower()]
+    
+    return training_data 
+
+def organize_raw_training_data(raw_training_data, stemmer):
+    return None 
+
+def create_training_data(stems, classes, documents , stemmer):
+    return None 
+
+def preprocess_words(words, stemmer):
+    no_duplicates = []
+
+    # Iterate through list of words and append the stem 
+    for word in words: 
+        if no_duplicates.count(word) == 0:
+            no_duplicates.append(stemmer.stem(word))
+    
+    # Ensure there are not any duplicates 
+    no_duplicates = set(no_duplicates)
+
+    return list(no_duplicates)
+
 
 """* * * TRAINING * * *"""
 def init_synapses(X, hidden_neurons, classes):
@@ -191,6 +213,7 @@ def main():
     """TODO: more instructions here..."""
     stemmer = LancasterStemmer()
     raw_training_data = get_raw_training_data('dialogue_data.csv')
+    words, classes, documents = organize_raw_training_data(raw_training_data, stemmer)
 
     # Comment this out if you have already trained once and don't want to re-train.
     start_training(words, classes, training_data, output)
