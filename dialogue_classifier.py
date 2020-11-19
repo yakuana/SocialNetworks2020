@@ -18,6 +18,23 @@ def get_raw_training_data(filename):
                 training_data[row[0].lower()] += [row[1].lower()]
             else:
                 training_data[row[0]] = [row[1].lower()]
+    
+    return training_data 
+    
+
+def preprocess_words(words, stemmer):
+    no_duplicates = []
+
+    # Iterate through list of words and append the stem 
+    for word in words: 
+        if no_duplicates.count(word) == 0:
+            no_duplicates.append(stemmer.stem(word))
+    
+    # Ensure there are not any duplicates 
+    no_duplicates = set(no_duplicates)
+
+    return(list(no_duplicates))
+
 
 """* * * TRAINING * * *"""
 def init_synapses(X, hidden_neurons, classes):
