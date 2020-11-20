@@ -1,3 +1,11 @@
+""" 
+Authors: Ya'Kuana Davis, Roger Trejo
+Course Name: CSCI 3725
+Assignment Name: PQ4
+Date: November 19, 2020
+Description: This file contains all of the functions neccessary to train and run a simple Neural Network.
+"""
+
 import nltk
 from nltk.stem.lancaster import LancasterStemmer
 import os
@@ -9,8 +17,13 @@ import time
 
 """TODO: add more here..."""
 def get_raw_training_data(filename):
+    """This function takes in the file, which would be the raw data and organizes it 
+    to be in the format of a dictionary that has the artist as the key, and the sentences
+    from the arist as the values in a list"""
+    #training data variable
     training_data = {}
 
+    #open file and read lines
     with open(filename, newline='') as file:
         raw_data = csv.reader(file)
         for row in raw_data:
@@ -18,27 +31,112 @@ def get_raw_training_data(filename):
                 training_data[row[0].lower()] += [row[1].lower()]
             else:
                 training_data[row[0]] = [row[1].lower()]
-    
+                
+    #return formatted training data 
     return training_data 
 
-def organize_raw_training_data(raw_training_data, stemmer):
-    return None 
 
-def create_training_data(stems, classes, documents , stemmer):
-    return None 
+def organize_raw_training_data(raw_training_data, stemmer):
+    """This function uses the raw_training_data to create a classes, a list of artits names,
+    full_list_of_words, a list of words that each artist uses, and documents, 
+    a list of tuples of all the words from the artist tupled with the artist name. """
+    classes = []                # List of artists name 
+    documents = []              # List of tuples (words[], artist_name)
+    full_list_of_words = []     # List of lists of words 
+
+    # Loop through raw_training_data dictionary
+    for artist in raw_training_data:
+        #append artists name
+        classes.append(artist)
+        #retrieve phrases from the arist
+        phrases = raw_training_data.get(artist)
+        #list of all the words from the artists 
+        words_of_artist = []
+        #loop through the phrases the from the artist
+        for phrase in phrases:  
+            # using nltk to tokenize each phrase
+            new_words = nltk.word_tokenize(phrase)
+            for word in new_words:
+                #appending word after nltk tokenization
+                words_of_artist.append(word)
+        #add list of words of artist to list of all the words from the artists
+        full_list_of_words.append(words_of_artist)
+        
+    #loop through arists and their words list
+    for i in range(0, len(classes) - 1):
+        #create (words, artist) tuple for documents
+        document = tuple(full_list_of_words[i], classes[i])
+        documents.append(document)
+    #return list of words, documents, and classes   
+    return full_list_of_words, documents, classes
+
+
+def create_training_data(stems, classes, documents, stemmer):
+    """Create the training data and output arrays using the stems, classes, and documents provided.""" 
+    training_data = [] 
+    output = [] 
+    number_of_classes = len(classes)
+    
+    for artist_tuple in documents: 
+        # Stores found words as 0's and 1's 
+        artist_training_data = [] 
+        
+        for word in artist_tuple[0]: 
+            # If the word is in stems add a one. Otherwise add a 0. 
+            if word in stems: 
+                artist_training_data.append(1)
+            else: 
+                artist_training_data.append(0)
+        
+        # Initialize the artist output list to have all 0s 
+        artist_output = [0 for i in range(number_of_classes)]
+
+        # Example: 
+        # [0, 0, 0] 
+        # ['jack', 'bob', 'tom']
+        # artist_tuple[1] == 'tom'
+        # at index i == 2 change 0  ->  1
+        # [0, 0, 1]
+
+        # Iterate through the artists and find the artist that said the sentence 
+        for i, artist in classes: 
+            if artist_tuple[1] == artist: 
+                artist_output[i] = 1
+        
+        # Append final data to respective lists 
+        training_data.append(artist_training_data)
+        output.append(artist_output)
+
+    return training_data, output  
+
 
 def preprocess_words(words, stemmer):
-    no_duplicates = []
-
-    # Iterate through list of words and append the stem 
-    for word in words: 
-        if no_duplicates.count(word) == 0:
-            no_duplicates.append(stemmer.stem(word))
+    """Return a list of stems given an initial list of lists of words.""" 
+    final_words_list = []
     
-    # Ensure there are not any duplicates 
-    no_duplicates = set(no_duplicates)
+    # Iterate through every list of words 
+    for words_list in words: 
+        # Iterate through every word 
+        for word in words_list:
+            # Remove punctuation and special characters  
+            word.strip(',!\'s\n!?.')
+            # Append stemmed word to final words list 
+            if (len(word) > 0 and final_words_list.count(word) == 0):
+                final_words_list.append(stemmer.stem(word))
 
-    return list(no_duplicates)
+    # Ensure there are not any duplicates 
+    return list(set(final_words_list))
+
+
+def sigmoid(z):
+    """Return the result of the sigmoid function."""
+    sigmoid_result = 1 / (1 + np.exp(-z))
+    return sigmoid_result 
+
+
+def sigmoid_output_to_derivative(output):
+    """Convert the sigmoid function's output to its derivative."""
+    return output * (1-output)
 
 
 """* * * TRAINING * * *"""
@@ -212,8 +310,11 @@ def classify(words, classes, sentence):
 def main():
     """TODO: more instructions here..."""
     stemmer = LancasterStemmer()
+
     raw_training_data = get_raw_training_data('dialogue_data.csv')
     words, classes, documents = organize_raw_training_data(raw_training_data, stemmer)
+    stems = preprocess_words(words, stemmer)
+    training_data, output = create_training_data(stems, classes, documents , stemmer)
 
     # Comment this out if you have already trained once and don't want to re-train.
     start_training(words, classes, training_data, output)
